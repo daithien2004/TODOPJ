@@ -30,7 +30,7 @@ jobs:
             --header "Content-Type: application/json" \
             --data '{
               "transition": {
-                "id": "31"  # Thay bằng ID transition thực tế
+                "id": "11"  # Thay bằng ID transition thực tế
               }
             }'
 
