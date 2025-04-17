@@ -1,9 +1,36 @@
 name: CI Pipeline
-on: [pull_request]
+
+on:
+  pull_request:
+    branches: [ main ]
 
 jobs:
-  build-and-test:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4  # Bước này luôn cần để clone code
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Run tests
+      run: echo "Running tests..."
+
+    - name: Notify Slack
+      if: github.event.pull_request.merged == true
+      run: |
+        curl -X POST -H 'Content-type: application/json' \
+        --data '{"text":"🎉 Issue đã được đóng và PR đã merge!"}' \
+        ${{ secrets.SLACK_WEBHOOK_URL }}
+
+    - name: Move Jira issue to Done
+      if: github.event.pull_request.merged == true
+      env:
+        JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
+        JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+        JIRA_DOMAIN: your-domain.atlassian.net
+      run: |
+        ISSUE_KEY=$(echo "${{ github.event.pull_request.title }}" | grep -o 'TODO-[0-9]\+')
+        curl -u "$JIRA_EMAIL:$JIRA_API_TOKEN" \
+          -X POST \
+          -H "Content-Type: application/json" \
+          --data '{"transition":{"id":"31"}}' \
+          https://$JIRA_DOMAIN/rest/api/3/issue/$ISSUE_KEY/transitions
