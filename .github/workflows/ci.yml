@@ -7,16 +7,3 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4  # Bước này luôn cần để clone code
-
-      # Thêm các bước dành cho ngôn ngữ của bạn (Python, Java, Go...)
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.10"
-
-      - name: Install dependencies
-        run: |
-          pip install -r requirements.txt  # Cài đặt dependencies từ file requirements.txt
-
-      - name: Run Tests
-        run: pytest  # Chạy test (thay bằng lệnh phù hợp)
