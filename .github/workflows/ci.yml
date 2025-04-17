@@ -23,7 +23,7 @@ jobs:
       env:
         JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
         JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
-        JIRA_DOMAIN: your-domain.atlassian.net
+        JIRA_DOMAIN: ${{ secrets.JIRA_URL }}
       run: |
         ISSUE_KEY=$(echo "${{ github.event.pull_request.title }}" | grep -o 'TODO-[0-9]\+')
         echo "Found issue: $ISSUE_KEY"
