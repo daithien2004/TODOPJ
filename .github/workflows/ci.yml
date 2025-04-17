@@ -6,21 +6,18 @@ on:
     branches: [main]
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  handle_pr:
     if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: Run tests
-      run: echo "Running tests..."
-
     - name: Notify Slack
       run: |
         curl -X POST -H 'Content-type: application/json' \
-        --data '{"text":"🎉 Issue đã được đóng và PR đã merge!"}' \
-        ${{ secrets.SLACK_WEBHOOK_URL }}
+        --data '{"text":"🎉 PR đã merge, issue có thể được đóng!"}' \
+        "${{ secrets.SLACK_WEBHOOK }}"
 
     - name: Move Jira issue to Done
       env:
@@ -29,9 +26,13 @@ jobs:
         JIRA_DOMAIN: your-domain.atlassian.net
       run: |
         ISSUE_KEY=$(echo "${{ github.event.pull_request.title }}" | grep -o 'TODO-[0-9]\+')
-        echo "Issue key found: $ISSUE_KEY"
-        curl -u "$JIRA_EMAIL:$JIRA_API_TOKEN" \
-          -X POST \
-          -H "Content-Type: application/json" \
-          --data '{"transition":{"id":"31"}}' \
-          https://$JIRA_DOMAIN/rest/api/3/issue/$ISSUE_KEY/transitions
+        echo "Found issue: $ISSUE_KEY"
+        if [ -n "$ISSUE_KEY" ]; then
+          curl -u "$JIRA_EMAIL:$JIRA_API_TOKEN" \
+            -X POST \
+            -H "Content-Type: application/json" \
+            --data '{"transition":{"id":"31"}}' \
+            https://$JIRA_DOMAIN/rest/api/3/issue/$ISSUE_KEY/transitions
+        else
+          echo "❌ Không tìm thấy issue key trong tiêu đề PR"
+        fi
