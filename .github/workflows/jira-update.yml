@@ -11,17 +11,28 @@ jobs:
       - name: Extract Issue Key
         id: extract-key
         run: |
-          echo "ISSUE_KEY=$(echo '${{ github.event.pull_request.title }}' | grep -oE '[A-Z]+-[0-9]+')" >> $GITHUB_OUTPUT
+          # Lấy Issue Key từ tiêu đề PR (vd: "TODO-1: Fix bug")
+          ISSUE_KEY=$(echo "${{ github.event.pull_request.title }}" | grep -oE '[A-Z]+-[0-9]+')
+          echo "ISSUE_KEY=$ISSUE_KEY" >> $GITHUB_OUTPUT
 
       - name: Transition Jira Issue
-        uses: atlassian/gajira-transition@v3  # Sử dụng phiên bản mới
-        with:
-          issue: ${{ steps.extract-key.outputs.ISSUE_KEY }}  # Đúng input name
-          transition: "Done"  # Tên trạng thái (hoặc ID)
+        if: steps.extract-key.outputs.ISSUE_KEY != ''
         env:
           JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
-          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
-          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          JIRA_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+          JIRA_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          ISSUE_KEY: ${{ steps.extract-key.outputs.ISSUE_KEY }}
+        run: |
+          # Gọi API Jira để chuyển trạng thái issue
+          curl --request POST \
+            --url "$JIRA_BASE_URL/rest/api/3/issue/$ISSUE_KEY/transitions" \
+            --user "$JIRA_EMAIL:$JIRA_TOKEN" \
+            --header "Content-Type: application/json" \
+            --data '{
+              "transition": {
+                "id": "31"  # Thay bằng ID transition thực tế
+              }
+            }'
 
       - name: Notify Slack
         uses: slackapi/slack-github-action@v1
