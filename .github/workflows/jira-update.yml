@@ -1,0 +1,30 @@
+name: Update Jira
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  update-jira:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Extract Issue Key
+        id: extract-key
+        run: |
+          echo "ISSUE_KEY=$(echo '${{ github.event.pull_request.title }}' | grep -oE '[A-Z]+-[0-9]+')" >> $GITHUB_OUTPUT
+
+      - name: Transition Jira Issue
+        uses: atlassian/gajira-transition@master
+        with:
+          issue-key: ${{ steps.extract-key.outputs.ISSUE_KEY }}
+          transition: Done
+          jira-url: ${{ secrets.JIRA_URL }}
+          jira-user-email: ${{ secrets.JIRA_EMAIL }}
+          jira-api-token: ${{ secrets.JIRA_API_TOKEN }}
+
+      - name: Notify Slack
+        uses: slackapi/slack-github-action@v1
+        with:
+          slack-message: "🎉 Issue ${{ steps.extract-key.outputs.ISSUE_KEY }} đã đóng!"
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
